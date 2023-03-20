@@ -36,7 +36,9 @@ public class LoginCheckFilter implements Filter {
                 "/employee/login",
                 "/employee/logout",
                 "/backend/**",
-                "/front/**"
+                "/front/**",
+                "/user/sendMsg", //移动端发送短信
+                "/user/login"  //移动端登录路径
         };
 
         //判断本次请求是否需要处理
@@ -49,11 +51,19 @@ public class LoginCheckFilter implements Filter {
             return ;
         }
 
-        //判断是否已登录，如果已登录放行
-        if (request.getSession().getAttribute("employee") !=null){
+        //判断是否已登录(移动端或者网页端)，如果已登录放行
+        if (request.getSession().getAttribute("employee") !=null || request.getSession().getAttribute("user") != null){
             Long empId = (Long)request.getSession().getAttribute("employee");
-            BaseContext.setThreadLocal(empId);
+            Long userId = (Long)request.getSession().getAttribute("user");
+
+            if (empId != null ){
+                BaseContext.setThreadLocal(empId);
+            }else {
+                BaseContext.setThreadLocal(userId);
+            }
+
             log.info("已登录 -> " + empId);
+            log.info("已登录 -> " + userId);
             filterChain.doFilter(request,response);
             return ;
         }
