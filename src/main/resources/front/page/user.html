@@ -24,7 +24,7 @@
             <div class="divUser">
                 <img src="./../images/headPage.png"/>
                 <div class="desc">
-                    <div class="divName">林之迷 <img src="./../images/women.png"/></div>
+                    <div class="divName">{{userName}} <img src="./../images/women.png"/></div>
                     <div class="divPhone">{{userPhone}}</div>
                 </div>
             </div>
@@ -102,6 +102,7 @@
                         amount:undefined,//实收金额
                         sumNum:0,//菜品总数
                     }],
+                    userName : '',
                 }
             },
             computed:{},
@@ -135,6 +136,7 @@
                     const res = await orderPagingApi(params)
                     if(res.code === 1){
                         this.order = res.data.records
+                        this.userName = this.order[0].userName
                         if(this.order && this.order[0].orderDetails){
                             let number = 0
                             this.order[0].orderDetails.forEach(item=>{

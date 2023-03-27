@@ -156,4 +156,25 @@ public class SetmealController {
 
         return R.success("删除成功");
     }
+
+
+    /**
+     * 根据套餐id查询其下的子套餐
+     * @param categoryId
+     * @param status
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<Setmeal>> list(Long categoryId,Integer status){
+
+        log.info(categoryId + " : " + status);
+
+        if (categoryId != null && status != null) {
+            LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(categoryId != null, Setmeal::getCategoryId, categoryId).eq(status != null, Setmeal::getStatus, status);
+            List<Setmeal> setmealList = setmealService.list(queryWrapper);
+            return R.success(setmealList);
+        }
+        return R.error("查询失败");
+    }
 }

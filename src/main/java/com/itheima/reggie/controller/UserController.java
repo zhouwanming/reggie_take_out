@@ -76,7 +76,7 @@ public class UserController {
         flog = true;
 
         //获取验证码和时间戳
-        
+
         //获取手机号
         String phone =(String) map.get("phone");
         //获取验证码
@@ -90,7 +90,7 @@ public class UserController {
         if (!session.getAttribute("code:" + phone).equals(code)){
             return R.error("验证码错误");
         }
-        
+
         //判断验证码是否已过期
         long currentTime = System.currentTimeMillis();// 获取当前时间戳
         //当前时间戳减去验证码时间戳是否大于过期时间
@@ -121,4 +121,16 @@ public class UserController {
         return R.success("验证成功");
     }
 
+    /**
+     * 移动用户退出登陆功能
+     * @return
+     */
+    @PostMapping("/loginout")
+    public R<String> loginOut(HttpSession session){
+
+        //删除session中的userId
+        session.removeAttribute("user");
+
+        return R.success("退出成功");
+    }
 }

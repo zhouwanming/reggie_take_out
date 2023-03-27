@@ -41,6 +41,20 @@ public class LoginCheckFilter implements Filter {
                 "/user/login"  //移动端登录路径
         };
 
+        //添加地址的漏洞
+        String l = "/front/page/address-edit.html";
+
+        if (requestURI.equals(l)){
+
+            Long userid = (Long) request.getSession().getAttribute("user");
+
+            if (userid == null){
+                response.sendRedirect("http://localhost:8080/front/page/login.html");
+                return;
+            }
+
+        }
+
         //判断本次请求是否需要处理
         boolean check = check(uris, requestURI);
 
@@ -50,24 +64,28 @@ public class LoginCheckFilter implements Filter {
             filterChain.doFilter(request,response);
             return ;
         }
+        //4、判断后台登录状态，如果已登录，则直接放行
+        if(request.getSession().getAttribute("employee") != null){
+            log.info("用户已登录，后台用户id为：{}",request.getSession().getAttribute("employee"));
 
-        //判断是否已登录(移动端或者网页端)，如果已登录放行
-        if (request.getSession().getAttribute("employee") !=null || request.getSession().getAttribute("user") != null){
-            Long empId = (Long)request.getSession().getAttribute("employee");
-            Long userId = (Long)request.getSession().getAttribute("user");
+            Long empId = (Long) request.getSession().getAttribute("employee");
 
-            if (empId != null ){
-                BaseContext.setThreadLocal(empId);
-            }else {
-                BaseContext.setThreadLocal(userId);
-            }
+            BaseContext.setThreadLocal(empId);
 
-            log.info("已登录 -> " + empId);
-            log.info("已登录 -> " + userId);
             filterChain.doFilter(request,response);
-            return ;
+            return;
         }
+        //4、判断移动端登录状态，如果已登录，则直接放行
+        if(request.getSession().getAttribute("user") != null){
+            log.info("用户已登录，移动用户id为：{}",request.getSession().getAttribute("user"));
 
+            Long userId = (Long) request.getSession().getAttribute("user");
+
+            BaseContext.setThreadLocal(userId);
+
+            filterChain.doFilter(request,response);
+            return;
+        }
         log.info("用户未登录");
         //如果未登录则返回未登录页面 , 通过输出流向客户端响应数据
         response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
