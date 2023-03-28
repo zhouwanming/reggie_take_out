@@ -5,9 +5,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.SetmealDto;
 import com.itheima.reggie.entity.Category;
+import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.entity.Setmeal;
 import com.itheima.reggie.entity.SetmealDish;
 import com.itheima.reggie.service.CategoryService;
+import com.itheima.reggie.service.DishService;
+import com.itheima.reggie.service.SetmealDishService;
 import com.itheima.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -28,6 +31,12 @@ public class SetmealController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private SetmealDishService setmealDishService;
+
+    @Autowired
+    private DishService dishService;
 
     /**
      * 显示套餐分页查询
@@ -177,4 +186,41 @@ public class SetmealController {
         }
         return R.error("查询失败");
     }
+
+    /**
+     * 根据套餐id查询菜品详细
+     * @param setmealId
+     * @return
+     */
+    @GetMapping("/dish/{setmealId}")
+    public R<List<List<Dish>>> dish(@PathVariable Long setmealId){
+
+        //根据套餐id查询套菜菜品
+        if (setmealId != null) {
+
+            LambdaQueryWrapper<SetmealDish> setmealDishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            setmealDishLambdaQueryWrapper.eq(SetmealDish::getSetmealId,setmealId);
+            List<SetmealDish> setmealDishes = setmealDishService.list(setmealDishLambdaQueryWrapper);
+
+            List<List<Dish>> dishLists = setmealDishes.stream().map((item) -> {
+
+                Long dishId = item.getDishId();
+
+                LambdaQueryWrapper<Dish> dishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+
+                dishLambdaQueryWrapper.eq(Dish::getId, dishId);
+
+                List<Dish> dishList = dishService.list(dishLambdaQueryWrapper);
+
+                return dishList;
+
+            }).collect(Collectors.toList());
+
+            return R.success(dishLists);
+
+        }
+
+        return R.error("提交参数有误");
+    }
+
 }

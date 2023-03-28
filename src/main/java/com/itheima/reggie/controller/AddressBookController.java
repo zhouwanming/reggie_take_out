@@ -85,4 +85,22 @@ public class AddressBookController {
 
         return R.success("添加成功");
     }
+
+
+    @GetMapping("/default")
+    public R<AddressBook> getDefaultAddressBook(HttpSession session){
+
+        //获取用户Id
+        Long userId = (Long) session.getAttribute("user");
+
+        LambdaQueryWrapper<AddressBook> queryWrapper = new LambdaQueryWrapper<>();
+
+        queryWrapper.eq(userId != null,AddressBook::getUserId,userId);
+        queryWrapper.eq(AddressBook::getIsDefault,1);
+
+        AddressBook addressBook = addressBookService.getOne(queryWrapper);
+
+
+        return R.success(addressBook);
+    }
 }

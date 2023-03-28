@@ -42,18 +42,26 @@ public class LoginCheckFilter implements Filter {
         };
 
         //添加地址的漏洞
-        String l = "/front/page/address-edit.html";
+        String hole[] = {"/front/page/address-edit.html","/backend/page/demo/upload.html"};
 
-        if (requestURI.equals(l)){
+        Long userid = (Long) request.getSession().getAttribute("user");
 
-            Long userid = (Long) request.getSession().getAttribute("user");
+        if (userid == null){
 
-            if (userid == null){
-                response.sendRedirect("http://localhost:8080/front/page/login.html");
-                return;
+            for (String s : hole){
+
+                if (requestURI.equals(s)){
+                    if (PATH_MATCHER.match(s, "/backend/page/demo/upload.html")) {
+                        response.sendRedirect("http://localhost:8080/backend/page/login/login.html");
+                        return;
+                    }
+                    response.sendRedirect("http://localhost:8080/front/page/login.html");
+                    return;
+                }
             }
 
         }
+
 
         //判断本次请求是否需要处理
         boolean check = check(uris, requestURI);

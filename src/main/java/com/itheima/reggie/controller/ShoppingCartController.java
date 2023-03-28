@@ -72,7 +72,7 @@ public class ShoppingCartController {
     @PostMapping("/sub")
     public R<String> sub(@RequestBody ShoppingCart shoppingCart) {
 
-        if (shoppingCart.getSetmealId() != null) {
+        if (shoppingCart.getSetmealId() != null || shoppingCart.getDishId() != null) {
             shoppingCartService.subShoppingCart(shoppingCart);
             return R.success("sub成功");
         }

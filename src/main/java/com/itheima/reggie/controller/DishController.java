@@ -10,6 +10,7 @@ import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.entity.DishFlavor;
 import com.itheima.reggie.service.CategoryService;
+import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -33,6 +34,9 @@ public class DishController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private DishFlavorService dishFlavorService;
 
     private Long id;
 
@@ -179,25 +183,42 @@ public class DishController {
 
     /**
      * 根据菜品分类CategoryId查询Dish菜品
-     * @param categoryId
-     * @param name
+     * @param dish
      * @return
      */
     @GetMapping("/list")
-    public R<List<Dish>> getDishByCategoryId(Long categoryId,String name){
+    public R<List<DishDto>> getDishByCategoryId(Dish dish){
 
-        //条件构造器
-        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
-        //根据CategoryId查
-        queryWrapper.eq(categoryId != null,Dish::getCategoryId,categoryId);
-        //根据菜品名称进行筛选
-        queryWrapper.like(StringUtils.isNotEmpty(name),Dish::getName,name);
-        //菜品是否已逻辑删除的情况
-        queryWrapper.eq(Dish::getIsDeleted,0);
+        List<DishDto> collect = null;
 
-        //根据菜品分类Id查询菜品
-        List<Dish> dishList = dishService.list(queryWrapper);
+        LambdaQueryWrapper<Dish> dishLambdaQueryWrapper = new LambdaQueryWrapper<>();
 
-        return R.success(dishList);
+        dishLambdaQueryWrapper.eq(dish.getCategoryId() != null,Dish::getCategoryId,dish.getCategoryId());
+        dishLambdaQueryWrapper.eq(dish.getStatus() != null,Dish::getStatus,dish.getStatus());
+        dishLambdaQueryWrapper.like(dish.getName() != null,Dish::getName,dish.getName());
+        dishLambdaQueryWrapper.orderByAsc(Dish::getSort);
+        List<Dish> dishList = dishService.list(dishLambdaQueryWrapper);
+
+        collect = dishList.stream().map((item)->{
+
+            DishDto dishDto = new DishDto();
+
+            BeanUtils.copyProperties(item,dishDto);
+
+            Long dishId = item.getId();
+
+            LambdaQueryWrapper<DishFlavor> dishFlavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
+
+            dishFlavorLambdaQueryWrapper.eq(DishFlavor::getDishId,dishId);
+
+            List<DishFlavor> dishFlavorList = dishFlavorService.list(dishFlavorLambdaQueryWrapper);
+
+            dishDto.setFlavors(dishFlavorList);;
+
+            return dishDto;
+        }).collect(Collectors.toList());
+
+
+        return R.success(collect);
     }
 }

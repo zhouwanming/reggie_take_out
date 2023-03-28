@@ -3,16 +3,11 @@ package com.itheima.reggie.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.itheima.reggie.common.BaseContext;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.OrdersDto;
-import com.itheima.reggie.entity.AddressBook;
-import com.itheima.reggie.entity.OrderDetail;
-import com.itheima.reggie.entity.Orders;
-import com.itheima.reggie.entity.User;
-import com.itheima.reggie.service.AddressBookService;
-import com.itheima.reggie.service.OrderDetailService;
-import com.itheima.reggie.service.OrdersService;
-import com.itheima.reggie.service.UserService;
+import com.itheima.reggie.entity.*;
+import com.itheima.reggie.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,7 +40,6 @@ public class OrdersController {
 
     /**
      * 显示订单分页查询
-     *
      * @param page
      * @param pageSize
      * @param number
@@ -106,6 +103,7 @@ public class OrdersController {
 
     /**
      * 修改订单状态: 取消，派送，完成
+     *
      * @param orders
      * @return
      */
@@ -123,12 +121,13 @@ public class OrdersController {
 
     /**
      * 展示个人用户的最新订单
+     *
      * @param page
      * @param pageSize
      * @return
      */
     @GetMapping("/userPage")
-    public R<Page> userPage(Integer page, Integer pageSize, HttpSession session){
+    public R<Page> userPage(Integer page, Integer pageSize, HttpSession session) {
 
         //获取当前用户的id
         Long userid = (Long) session.getAttribute("user");
@@ -138,24 +137,24 @@ public class OrdersController {
         Page<OrdersDto> ordersDtoPage = new Page<>(page, pageSize);
 
         LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(userid != null,Orders::getUserId,userid);
-
-        ordersService.page(ordersPage,queryWrapper);
+        queryWrapper.eq(userid != null, Orders::getUserId, userid);
+        queryWrapper.orderByDesc(Orders::getOrderTime);
+        ordersService.page(ordersPage, queryWrapper);
 
         //对象拷贝
-        BeanUtils.copyProperties(ordersPage,ordersDtoPage);
+        BeanUtils.copyProperties(ordersPage, ordersDtoPage);
 
         List<Orders> records = ordersPage.getRecords();
 
-        List<OrdersDto> ordersDtoList = records.stream().map((item)->{
+        List<OrdersDto> ordersDtoList = records.stream().map((item) -> {
 
             OrdersDto ordersDto = new OrdersDto();
 
             //对象拷贝
-            BeanUtils.copyProperties(item,ordersDto);
+            BeanUtils.copyProperties(item, ordersDto);
 
             //查询用户名
-            if (userid != null){
+            if (userid != null) {
                 User user = userService.getById(userid);
                 ordersDto.setUserName(user.getName());
             }
@@ -165,8 +164,8 @@ public class OrdersController {
             Page<OrderDetail> orderDetailPage = new Page<>();
             if (itemId != null) {
                 LambdaQueryWrapper<OrderDetail> orderDetailQueryWrapper = new LambdaQueryWrapper<>();
-                orderDetailQueryWrapper.eq(itemId != null,OrderDetail::getOrderId,itemId);
-                orderDetailService.page(orderDetailPage,orderDetailQueryWrapper);
+                orderDetailQueryWrapper.eq(itemId != null, OrderDetail::getOrderId, itemId);
+                orderDetailService.page(orderDetailPage, orderDetailQueryWrapper);
             }
 
             ordersDto.setOrderDetails(orderDetailPage.getRecords());
@@ -180,4 +179,19 @@ public class OrdersController {
         return R.success(ordersDtoPage);
     }
 
+
+    /**
+     * 提交订单
+     *
+     * @return
+     */
+    @PostMapping("/submit")
+    public R<String> submitOrder(@RequestBody Orders orders) {
+
+        log.info("订单数据 : {}" + orders);
+
+        ordersService.submit(orders);
+
+        return R.success("下单成功");
+    }
 }

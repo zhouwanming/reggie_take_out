@@ -17,16 +17,23 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
     @Override
     public ShoppingCart addShoppingCart(ShoppingCart shoppingCart, Long userId) {
 
-        Long setmealId = shoppingCart.getSetmealId();
         String cartName = shoppingCart.getName();
         String image = shoppingCart.getImage();
 
         //判断参数是否有为null
-        if (setmealId  != null && cartName != null && image != null) {
+        if (cartName != null && image != null ) {
 
             //查询该菜品或套餐是否已有加入购物车
             LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(ShoppingCart::getUserId, userId).eq(ShoppingCart::getSetmealId, setmealId);
+            queryWrapper.eq(ShoppingCart::getUserId, userId);
+
+            //菜品存在
+            if (shoppingCart.getDishId() != null){
+                queryWrapper.eq(ShoppingCart::getDishId,shoppingCart.getDishId());
+            }else {
+                queryWrapper.eq(ShoppingCart::getSetmealId,shoppingCart.getSetmealId());
+            }
+
             ShoppingCart shoppingCartOne = this.getOne(queryWrapper);
 
             if (shoppingCartOne != null) {
@@ -54,9 +61,15 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
 
         //菜品或套餐id
         Long setmealId = (Long) shoppingCart.getSetmealId();
+        Long dishId = shoppingCart.getDishId();
 
         LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ShoppingCart::getSetmealId, setmealId);
+
+        if (setmealId !=null){
+            queryWrapper.eq(ShoppingCart::getSetmealId, setmealId);
+        }else {
+            queryWrapper.eq(ShoppingCart::getDishId, dishId);
+        }
 
         ShoppingCart shoppingCart1 = this.getOne(queryWrapper);
 
