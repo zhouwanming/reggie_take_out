@@ -22,3 +22,6 @@ mybatis-plus:
       id-type: ASSIGN_ID
 reggie:
   path: D:\Learning-java\study\reggie_take_out\src\main\resources\backend\images\dish\
+logging:
+  level:
+    com.itheima: debug
